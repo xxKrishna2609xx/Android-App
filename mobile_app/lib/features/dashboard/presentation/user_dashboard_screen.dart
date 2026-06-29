@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/login_screen.dart';
 import 'dashboard_controller.dart';
+import '../data/dashboard_repository.dart';
 import '../../home/presentation/widgets/business_card.dart';
 import '../../business_details/presentation/business_details_screen.dart';
 import 'apply_business_screen.dart';
@@ -71,7 +72,7 @@ class UserDashboardScreen extends ConsumerWidget {
         body: TabBarView(
           children: [
             _buildSavedListingsTab(ref),
-            _buildApplicationsTab(ref),
+            _buildApplicationsTab(context, ref, user),
             _buildMyBusinessesTab(ref),
           ],
         ),
@@ -133,7 +134,7 @@ class UserDashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildApplicationsTab(WidgetRef ref) {
+  Widget _buildApplicationsTab(BuildContext context, WidgetRef ref, dynamic user) {
     final applicationsState = ref.watch(myApplicationsProvider);
 
     return RefreshIndicator(
@@ -216,6 +217,29 @@ class UserDashboardScreen extends ConsumerWidget {
                             'Reason: $reason',
                             style: const TextStyle(color: Colors.red, fontSize: 12),
                           ),
+                        ),
+                      ],
+                      if (user?.role == 'admin' && status == 'PENDING') ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => _rejectApplication(context, ref, app['id'] ?? app['_id'] ?? ''),
+                              style: TextButton.styleFrom(foregroundColor: Colors.red),
+                              child: const Text('Reject'),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              onPressed: () => _approveApplication(context, ref, app['id'] ?? app['_id'] ?? ''),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF10B981),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              ),
+                              child: const Text('Approve'),
+                            ),
+                          ],
                         ),
                       ],
                     ],
@@ -376,6 +400,78 @@ class UserDashboardScreen extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _approveApplication(BuildContext context, WidgetRef ref, String id) async {
+    try {
+      final repo = ref.read(dashboardRepositoryProvider);
+      final response = await repo.approveApplication(id);
+      if (response.statusCode == 200) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Application approved successfully!'), backgroundColor: Colors.green),
+          );
+        }
+        ref.invalidate(myApplicationsProvider);
+        ref.invalidate(myBusinessesProvider);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to approve application: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _rejectApplication(BuildContext context, WidgetRef ref, String id) async {
+    final reasonController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reject Application'),
+        content: TextField(
+          controller: reasonController,
+          decoration: const InputDecoration(
+            labelText: 'Reason for rejection',
+            hintText: 'Enter reason...',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final reason = reasonController.text.trim();
+              if (reason.isEmpty) return;
+              Navigator.of(context).pop();
+              try {
+                final repo = ref.read(dashboardRepositoryProvider);
+                final response = await repo.rejectApplication(id, reason);
+                if (response.statusCode == 200) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Application rejected!'), backgroundColor: Colors.orange),
+                    );
+                  }
+                  ref.invalidate(myApplicationsProvider);
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to reject application: $e'), backgroundColor: Colors.red),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            child: const Text('Reject'),
+          ),
+        ],
       ),
     );
   }

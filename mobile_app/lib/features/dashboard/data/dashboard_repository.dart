@@ -24,6 +24,26 @@ class DashboardRepository {
     return await _dio.get('/my-business-leads/$email');
   }
 
+  Future<Response> getAdminApplications() async {
+    return await _dio.get('/admin/applications');
+  }
+
+  Future<Response> getAllLeads() async {
+    return await _dio.get('/leads');
+  }
+
+  Future<Response> getAllBusinesses() async {
+    return await _dio.get('/businesses');
+  }
+
+  Future<Response> approveApplication(String id) async {
+    return await _dio.put('/admin/applications/$id/approve');
+  }
+
+  Future<Response> rejectApplication(String id, String reason) async {
+    return await _dio.put('/admin/applications/$id/reject', data: {'reason': reason});
+  }
+
   Future<Response> applyForBusiness(Map<String, dynamic> applicationData) async {
     return await _dio.post('/business/apply', data: applicationData);
   }

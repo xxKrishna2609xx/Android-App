@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../business_details/presentation/business_details_controller.dart';
 import '../../business_details/data/business_details_repository.dart';
@@ -9,7 +10,13 @@ final myBusinessesProvider = FutureProvider<List<dynamic>>((ref) async {
   final userState = ref.watch(authControllerProvider);
   if (userState.user == null) return [];
   
-  final response = await repo.getMyBusinesses();
+  final Response response;
+  if (userState.user!.role == 'admin') {
+    response = await repo.getAllBusinesses();
+  } else {
+    response = await repo.getMyBusinesses();
+  }
+  
   if (response.statusCode == 200 && response.data != null) {
     return List<dynamic>.from(response.data);
   }
@@ -21,7 +28,13 @@ final myApplicationsProvider = FutureProvider<List<dynamic>>((ref) async {
   final userState = ref.watch(authControllerProvider);
   if (userState.user == null) return [];
   
-  final response = await repo.getMyApplications(userState.user!.email);
+  final Response response;
+  if (userState.user!.role == 'admin') {
+    response = await repo.getAdminApplications();
+  } else {
+    response = await repo.getMyApplications(userState.user!.email);
+  }
+  
   if (response.statusCode == 200 && response.data != null) {
     return List<dynamic>.from(response.data);
   }
@@ -33,7 +46,13 @@ final myBusinessLeadsProvider = FutureProvider<List<dynamic>>((ref) async {
   final userState = ref.watch(authControllerProvider);
   if (userState.user == null) return [];
   
-  final response = await repo.getMyBusinessLeads(userState.user!.email);
+  final Response response;
+  if (userState.user!.role == 'admin') {
+    response = await repo.getAllLeads();
+  } else {
+    response = await repo.getMyBusinessLeads(userState.user!.email);
+  }
+  
   if (response.statusCode == 200 && response.data != null) {
     return List<dynamic>.from(response.data);
   }
