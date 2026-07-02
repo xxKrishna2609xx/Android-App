@@ -307,7 +307,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           return BusinessCard(
             business: biz,
             onTap: () {
-              final id = biz['id'] ?? biz['_id'] ?? '';
+              final id = biz['_id'] ?? biz['id'] ?? '';
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => BusinessDetailsScreen(businessId: id),

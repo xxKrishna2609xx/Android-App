@@ -117,7 +117,7 @@ class UserDashboardScreen extends ConsumerWidget {
               return BusinessCard(
                 business: biz,
                 onTap: () {
-                  final id = biz['id'] ?? biz['_id'] ?? '';
+                  final id = biz['_id'] ?? biz['id'] ?? '';
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => BusinessDetailsScreen(businessId: id),
@@ -295,7 +295,7 @@ class UserDashboardScreen extends ConsumerWidget {
                     return BusinessCard(
                       business: biz,
                       onTap: () {
-                        final id = biz['id'] ?? biz['_id'] ?? '';
+                        final id = biz['_id'] ?? biz['id'] ?? '';
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => BusinessDetailsScreen(businessId: id),
